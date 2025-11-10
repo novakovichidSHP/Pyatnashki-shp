@@ -3,35 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f6feb" />
     <title>МШП - Пятнашки</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="page-header">
-      <h1 class="page-title">МШП — Пятнашки</h1>
-      <p class="page-subtitle">
-        Соберите поле, используя ссылку с зашифрованной раскладкой
-      </p>
+    <header class="app-bar" role="banner">
+      <div class="app-bar__content">
+        <div class="app-bar__titles">
+          <span class="app-bar__overline">МШП</span>
+          <h1 class="app-bar__title">Пятнашки</h1>
+        </div>
+        <a class="text-button" href="generator/index.html">Генератор</a>
+      </div>
     </header>
-    <main class="page-content">
-      <section class="status-panel" aria-live="polite">
-        <div class="status-item">
-          <span class="status-label">Размер:</span>
-          <span id="board-size" class="status-value"></span>
+    <main class="layout" role="main">
+      <section class="surface status-card" aria-live="polite">
+        <h2 class="status-card__title">Состояние игры</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Размер</span>
+            <span id="board-size" class="status-value"></span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Ходы</span>
+            <span id="move-count" class="status-value">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Время</span>
+            <span id="timer" class="status-value">00:00</span>
+          </div>
         </div>
-        <div class="status-item">
-          <span class="status-label">Ходы:</span>
-          <span id="move-count" class="status-value">0</span>
-        </div>
-        <div class="status-item">
-          <span class="status-label">Время:</span>
-          <span id="timer" class="status-value">00:00</span>
-        </div>
-        <button id="restart" type="button" class="primary-button">
-          Перезапуск
+        <button id="restart" type="button" class="filled-button">
+          Перезапустить
         </button>
       </section>
-      <section class="board-wrapper">
+      <section class="surface board-card">
         <div
           id="board"
           class="board"
@@ -39,25 +52,6 @@
           aria-label="Игровое поле"
         ></div>
         <p id="message" class="message" role="status" aria-live="assertive"></p>
-      </section>
-      <section class="help-panel">
-        <h2>Как начать игру</h2>
-        <ol>
-          <li>
-            Перейдите на
-            <a href="generator/" class="link">служебную страницу</a> и создайте
-            нужное поле.
-          </li>
-          <li>Скопируйте сгенерированный адрес со скрытым шифром.</li>
-          <li>
-            Откройте его и начните собирать пятнашки, перемещая плитки рядом с
-            пустой.
-          </li>
-        </ol>
-        <p>
-          Если параметры не указаны, будет использована стандартная раскладка
-          4×4.
-        </p>
       </section>
     </main>
     <footer class="page-footer">

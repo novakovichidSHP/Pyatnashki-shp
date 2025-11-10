@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   boardSizeElement.textContent = `${state.width} × ${state.height}`;
   renderBoard();
+  window.addEventListener("resize", sizeBoard);
 
   restartButton.addEventListener("click", () => {
     resetState();
@@ -46,6 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     moveCountElement.textContent = "0";
     timerElement.textContent = formatTime(0);
     messageElement.textContent = "";
+    messageElement.classList.remove("message-win");
     renderBoard();
   }
 
@@ -68,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
     boardElement.innerHTML = "";
     boardElement.style.gridTemplateColumns = `repeat(${state.width}, 1fr)`;
     boardElement.style.gridTemplateRows = `repeat(${state.height}, 1fr)`;
-    boardElement.style.aspectRatio = `${state.width} / ${state.height}`;
 
     state.tiles.forEach((value, index) => {
       const tile = document.createElement("button");
@@ -88,6 +89,34 @@ document.addEventListener("DOMContentLoaded", () => {
       tile.addEventListener("click", () => handleTileClick(index));
       boardElement.appendChild(tile);
     });
+
+    sizeBoard();
+  }
+
+  function sizeBoard() {
+    const minEdge = 240;
+    const safeHorizontal = Math.max(window.innerWidth - 240, minEdge);
+    const safeVertical = Math.max(window.innerHeight - 360, minEdge);
+    const maxWidth = Math.min(480, safeHorizontal);
+    const maxHeight = Math.min(480, safeVertical);
+    const ratio = state.width / state.height;
+
+    let boardWidth = maxWidth;
+    let boardHeight = boardWidth / ratio;
+
+    if (boardHeight > maxHeight) {
+      boardHeight = maxHeight;
+      boardWidth = boardHeight * ratio;
+    }
+
+    if (boardWidth < minEdge || boardHeight < minEdge) {
+      const scale = Math.max(minEdge / boardWidth, minEdge / boardHeight);
+      boardWidth = Math.min(maxWidth, boardWidth * scale);
+      boardHeight = Math.min(maxHeight, boardHeight * scale);
+    }
+
+    boardElement.style.width = `${Math.round(boardWidth)}px`;
+    boardElement.style.height = `${Math.round(boardHeight)}px`;
   }
 
   function handleTileClick(index) {
@@ -113,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isSolved(state.tiles)) {
       stopTimer();
       messageElement.textContent = `Готово! Вы собрали поле за ${state.moves} ходов и ${formatTime(state.seconds)}.`;
+      messageElement.classList.add("message-win");
     }
   }
 });

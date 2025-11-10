@@ -8,12 +8,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const preview = document.getElementById("preview");
   const payloadField = document.getElementById("payload");
   const urlField = document.getElementById("url");
+  const generateButton = document.getElementById("generate");
   const copyButton = document.getElementById("copy");
   const copyStatus = document.getElementById("copy-status");
   const validationMessage = document.getElementById("validation");
 
   let gridWidth = clamp(Number(widthInput.value), 2, 8);
   let gridHeight = clamp(Number(heightInput.value), 2, 8);
+  let lastValidResult = { payload: "", url: "" };
 
   const initialFromUrl = readFromUrl();
   let initialValues = null;
@@ -40,6 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = autofillSelect.value;
     if (mode === "clear") {
       buildGrid(Array(gridWidth * gridHeight).fill(""));
+    } else if (mode === "random") {
+      buildGrid(createRandomValues(gridWidth, gridHeight));
     } else {
       buildGrid(createSequenceValues(gridWidth, gridHeight));
     }
@@ -47,7 +51,15 @@ document.addEventListener("DOMContentLoaded", () => {
     updateResult();
   });
 
+  generateButton.addEventListener("click", () => {
+    updateResult();
+  });
+
   copyButton.addEventListener("click", async () => {
+    if (!urlField.value) {
+      updateResult();
+    }
+
     if (!urlField.value) {
       return;
     }
@@ -88,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       input.addEventListener("input", () => {
         copyStatus.textContent = "";
-        updateResult();
+        markDirty();
       });
 
       preview.appendChild(input);
@@ -99,13 +111,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const { tiles, error } = collectTiles();
 
     if (error) {
+      validationMessage.dataset.state = "error";
       validationMessage.textContent = error;
-      payloadField.value = "";
-      urlField.value = "";
+      if (lastValidResult.payload && lastValidResult.url) {
+        payloadField.value = lastValidResult.payload;
+        urlField.value = lastValidResult.url;
+      } else {
+        payloadField.value = "";
+        urlField.value = "";
+      }
       return;
     }
 
     validationMessage.textContent = "";
+    delete validationMessage.dataset.state;
     const payload = encodePuzzle({
       width: gridWidth,
       height: gridHeight,
@@ -114,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const targetUrl = buildTargetUrl(payload);
     payloadField.value = payload;
     urlField.value = targetUrl;
+    lastValidResult = { payload, url: targetUrl };
   }
 
   function collectTiles() {
@@ -176,6 +196,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function createRandomValues(width, height) {
+    const total = width * height;
+    let candidate = [];
+
+    do {
+      candidate = shuffle(Array.from({ length: total }, (_, index) => index));
+    } while (!isSolvable(candidate, width, height));
+
+    return candidate.map((value) => (value === 0 ? "" : value.toString()));
+  }
+
+  function shuffle(values) {
+    const result = [...values];
+    for (let i = result.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+
+  function isSolvable(tiles, width, height) {
+    const withoutZero = tiles.filter((value) => value !== 0);
+    let inversions = 0;
+    for (let i = 0; i < withoutZero.length; i += 1) {
+      for (let j = i + 1; j < withoutZero.length; j += 1) {
+        if (withoutZero[i] > withoutZero[j]) {
+          inversions += 1;
+        }
+      }
+    }
+
+    if (width % 2 !== 0) {
+      return inversions % 2 === 0;
+    }
+
+    const emptyIndex = tiles.indexOf(0);
+    const emptyRowFromBottom = height - Math.floor(emptyIndex / width);
+    if (emptyRowFromBottom % 2 === 0) {
+      return inversions % 2 === 1;
+    }
+
+    return inversions % 2 === 0;
+  }
+
   function buildTargetUrl(payload) {
     const baseUrl = new URL("../", window.location.href);
     baseUrl.search = "";
@@ -199,5 +263,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
+  }
+
+  function markDirty() {
+    if (validationMessage.dataset.state !== "error") {
+      validationMessage.textContent = "Поле изменено. Нажмите «Создать ссылку».";
+      validationMessage.dataset.state = "info";
+    }
   }
 });

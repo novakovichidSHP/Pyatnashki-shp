@@ -80,6 +80,14 @@ textarea:focus {
   min-height: 2.75rem;
 }
 
+.message[data-state="error"] {
+  color: #d63939;
+}
+
+.message[data-state="info"] {
+  color: var(--muted);
+}
+
 @media (max-width: 720px) {
   .preview {
     grid-template-columns: repeat(var(--columns, 4), minmax(48px, 1fr));

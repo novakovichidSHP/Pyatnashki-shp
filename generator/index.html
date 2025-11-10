@@ -28,6 +28,7 @@
           <label class="control-label" for="autofill">Автозаполнение</label>
           <select id="autofill">
             <option value="sequence" selected>1…N и пустая в конце</option>
+            <option value="random">Случайное заполнение</option>
             <option value="clear">Очистить поле</option>
           </select>
         </div>
@@ -56,6 +57,9 @@
         <textarea id="payload" readonly rows="2"></textarea>
         <label class="control-label" for="url">Полный адрес</label>
         <textarea id="url" readonly rows="2"></textarea>
+        <button type="button" id="generate" class="primary-button">
+          Создать ссылку
+        </button>
         <button type="button" id="copy" class="primary-button">
           Скопировать адрес
         </button>
