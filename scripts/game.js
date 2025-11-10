@@ -99,9 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const safeVertical = Math.max(window.innerHeight - 360, minEdge);
     const maxWidth = Math.min(480, safeHorizontal);
     const maxHeight = Math.min(480, safeVertical);
-    const maxWidth = Math.max(Math.min(window.innerWidth * 0.8, 520), 240);
-    const maxHeightLimit = Math.min(window.innerHeight * 0.68, window.innerHeight - 320);
-    const maxHeight = Math.max(maxHeightLimit, 240);
     const ratio = state.width / state.height;
 
     let boardWidth = maxWidth;
@@ -120,10 +117,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     boardElement.style.width = `${Math.round(boardWidth)}px`;
     boardElement.style.height = `${Math.round(boardHeight)}px`;
-    const roundedWidth = Math.round(boardWidth);
-    const roundedHeight = Math.round(boardHeight);
-    boardElement.style.width = `${roundedWidth}px`;
-    boardElement.style.height = `${roundedHeight}px`;
   }
 
   function handleTileClick(index) {
