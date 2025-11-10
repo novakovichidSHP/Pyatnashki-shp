@@ -94,6 +94,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function sizeBoard() {
+    const minEdge = 240;
+    const safeHorizontal = Math.max(window.innerWidth - 240, minEdge);
+    const safeVertical = Math.max(window.innerHeight - 360, minEdge);
+    const maxWidth = Math.min(480, safeHorizontal);
+    const maxHeight = Math.min(480, safeVertical);
     const maxWidth = Math.max(Math.min(window.innerWidth * 0.8, 520), 240);
     const maxHeightLimit = Math.min(window.innerHeight * 0.68, window.innerHeight - 320);
     const maxHeight = Math.max(maxHeightLimit, 240);
@@ -107,6 +112,14 @@ document.addEventListener("DOMContentLoaded", () => {
       boardWidth = boardHeight * ratio;
     }
 
+    if (boardWidth < minEdge || boardHeight < minEdge) {
+      const scale = Math.max(minEdge / boardWidth, minEdge / boardHeight);
+      boardWidth = Math.min(maxWidth, boardWidth * scale);
+      boardHeight = Math.min(maxHeight, boardHeight * scale);
+    }
+
+    boardElement.style.width = `${Math.round(boardWidth)}px`;
+    boardElement.style.height = `${Math.round(boardHeight)}px`;
     const roundedWidth = Math.round(boardWidth);
     const roundedHeight = Math.round(boardHeight);
     boardElement.style.width = `${roundedWidth}px`;
