@@ -1,3 +1,48 @@
+
+:root {
+  --gap: clamp(1rem, 3vw, 1.6rem);
+  --surface: var(--md-sys-color-surface-container, #ffffff);
+  --border-radius: var(--md-sys-radius, 18px);
+  --shadow: var(--md-sys-shadow-sm, 0 12px 24px rgba(15, 23, 42, 0.12));
+  --accent: var(--md-sys-color-primary, #1f6feb);
+  --primary: var(--md-sys-color-primary, #1f6feb);
+  --primary-light: #9fbefc;
+  --muted: var(--md-sys-color-on-surface-variant, #475569);
+}
+
+.page-header,
+.page-content,
+.page-footer {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 4vw, 2.25rem);
+}
+
+.page-header {
+  display: grid;
+  gap: 0.65rem;
+  padding-block: clamp(1.5rem, 5vw, 2.75rem) clamp(0.75rem, 3vw, 1.5rem);
+  text-align: center;
+}
+
+.page-title {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 2.85rem);
+  font-weight: 700;
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 2.8vw, 1.2rem);
+}
+
+.page-content {
+  display: grid;
+  gap: var(--gap);
+  padding-bottom: clamp(1.5rem, 5vw, 2.5rem);
+}
+
 .generator-layout {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   align-items: start;
@@ -12,6 +57,39 @@
   box-shadow: var(--shadow);
   display: grid;
   gap: var(--gap);
+}
+
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.6rem;
+  background: var(--primary);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.primary-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(31, 111, 235, 0.25);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+  box-shadow: 0 10px 22px rgba(31, 111, 235, 0.18);
+}
+
+.primary-button:focus-visible {
+  outline: 3px solid rgba(31, 111, 235, 0.45);
+  outline-offset: 3px;
 }
 
 .control-group {
@@ -73,6 +151,13 @@ textarea:focus {
   margin: 0;
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+.page-footer {
+  padding-block: clamp(1rem, 4vw, 1.75rem);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .generator-result textarea {
