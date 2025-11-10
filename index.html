@@ -20,7 +20,9 @@
           <span class="app-bar__overline">МШП</span>
           <h1 class="app-bar__title">Пятнашки</h1>
         </div>
-        <a class="text-button" href="generator/index.html">Генератор</a>
+        <button type="button" class="text-button" id="open-settings">
+          Настроить поле
+        </button>
       </div>
     </header>
     <main class="layout" role="main">
@@ -57,6 +59,79 @@
     <footer class="page-footer">
       <small>© МШП — Пятнашки</small>
     </footer>
+    <div id="settings-modal" class="modal" aria-hidden="true">
+      <div class="modal__backdrop" data-close="true"></div>
+      <div
+        class="modal__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+      >
+        <header class="modal__header">
+          <h2 id="settings-title">Настройки поля</h2>
+          <button
+            type="button"
+            class="icon-button"
+            id="close-settings"
+            aria-label="Закрыть окно"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </header>
+        <form id="settings-form" class="modal__content">
+          <div class="field-grid">
+            <label class="field">
+              <span class="field__label">Ширина</span>
+              <input
+                id="settings-width"
+                name="width"
+                type="number"
+                min="2"
+                max="8"
+                required
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">Высота</span>
+              <input
+                id="settings-height"
+                name="height"
+                type="number"
+                min="2"
+                max="8"
+                required
+              />
+            </label>
+            <label class="field field--full">
+              <span class="field__label">Заполнить</span>
+              <select id="settings-preset" name="preset">
+                <option value="sequence">По порядку</option>
+                <option value="random">Случайно</option>
+                <option value="clear">Очистить</option>
+              </select>
+            </label>
+          </div>
+          <div class="settings-controls">
+            <button type="button" class="outlined-button" id="settings-rebuild">
+              Обновить сетку
+            </button>
+          </div>
+          <div
+            class="settings-grid"
+            id="settings-grid"
+            role="grid"
+            aria-label="Редактор плиток"
+          ></div>
+          <p id="settings-status" class="modal__status" role="status" aria-live="polite"></p>
+          <div class="modal__actions">
+            <button type="button" class="text-button" id="cancel-settings">
+              Отмена
+            </button>
+            <button type="submit" class="filled-button">Применить</button>
+          </div>
+        </form>
+      </div>
+    </div>
     <script type="module" src="scripts/game.js"></script>
   </body>
 </html>
