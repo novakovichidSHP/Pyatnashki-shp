@@ -252,6 +252,9 @@ a {
 .tile--image {
   background-color: rgba(10, 26, 58, 0.35);
   background-blend-mode: multiply;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .tile:hover {
