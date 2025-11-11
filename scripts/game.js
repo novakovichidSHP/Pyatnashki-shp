@@ -1,4 +1,8 @@
 import { decodePuzzle } from "./puzzle.js";
+import {
+  hasTileBackgrounds,
+  sanitizeTileBackgrounds,
+} from "./resources.js";
 
 const defaultPuzzle = {
   width: 4,
@@ -27,10 +31,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const initialPuzzle = parsePuzzleFromUrl() ?? defaultPuzzle;
   let initialTiles = [...initialPuzzle.tiles];
+  let initialBackgrounds = createBackgroundState(
+    initialPuzzle.width,
+    initialPuzzle.height,
+    initialPuzzle.backgrounds,
+  );
 
   let state = {
     ...initialPuzzle,
     tiles: [...initialTiles],
+    backgrounds: [...initialBackgrounds],
     moves: 0,
     seconds: 0,
     timer: null,
@@ -54,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state = {
       ...state,
       tiles: [...initialTiles],
+      backgrounds: [...initialBackgrounds],
       moves: 0,
       seconds: 0,
       timer: null,
@@ -86,6 +97,13 @@ document.addEventListener("DOMContentLoaded", () => {
     boardElement.style.gridTemplateColumns = `repeat(${state.width}, 1fr)`;
     boardElement.style.gridTemplateRows = `repeat(${state.height}, 1fr)`;
 
+    const hasBackgrounds = hasTileBackgrounds(state.backgrounds);
+    if (hasBackgrounds) {
+      boardElement.dataset.hasBackgrounds = "true";
+    } else {
+      delete boardElement.dataset.hasBackgrounds;
+    }
+
     state.tiles.forEach((value, index) => {
       const tile = document.createElement("button");
       tile.type = "button";
@@ -99,6 +117,22 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         tile.setAttribute("aria-hidden", "true");
         tile.tabIndex = -1;
+      }
+
+      const background = state.backgrounds?.[index] ?? "";
+      if (background) {
+        tile.classList.add("tile--image");
+        const url = buildTileBackgroundUrl(background);
+        tile.style.backgroundImage = `url(${url})`;
+        tile.style.backgroundSize = "cover";
+        tile.style.backgroundPosition = "center";
+        tile.style.backgroundRepeat = "no-repeat";
+      } else {
+        tile.classList.remove("tile--image");
+        tile.style.backgroundImage = "";
+        tile.style.backgroundSize = "";
+        tile.style.backgroundPosition = "";
+        tile.style.backgroundRepeat = "";
       }
 
       tile.addEventListener("click", () => handleTileClick(index));
@@ -148,7 +182,16 @@ document.addEventListener("DOMContentLoaded", () => {
       newTiles[index],
     ];
 
+    const newBackgrounds = [...state.backgrounds];
+    if (newBackgrounds.length) {
+      [newBackgrounds[index], newBackgrounds[emptyIndex]] = [
+        newBackgrounds[emptyIndex],
+        newBackgrounds[index],
+      ];
+    }
+
     state.tiles = newTiles;
+    state.backgrounds = newBackgrounds;
     state.moves += 1;
     moveCountElement.textContent = state.moves.toString();
 
@@ -355,14 +398,24 @@ document.addEventListener("DOMContentLoaded", () => {
       return { tiles, error: null };
     }
 
-    function applyPuzzle({ width, height, tiles }) {
+    function applyPuzzle({ width, height, tiles, backgrounds }) {
       clearInterval(state.timer);
       initialTiles = [...tiles];
+      const total = width * height;
+      const previousInitialBackgrounds = initialBackgrounds;
+      if (Array.isArray(backgrounds) && backgrounds.length === total) {
+        initialBackgrounds = sanitizeTileBackgrounds(backgrounds, total);
+      } else if (previousInitialBackgrounds.length === total) {
+        initialBackgrounds = [...previousInitialBackgrounds];
+      } else {
+        initialBackgrounds = createBackgroundState(width, height);
+      }
       state = {
         ...state,
         width,
         height,
         tiles: [...tiles],
+        backgrounds: [...initialBackgrounds],
         moves: 0,
         seconds: 0,
         timer: null,
@@ -485,4 +538,14 @@ function isPuzzleSolvable(tiles, width, height) {
 
 function toEditorValue(value) {
   return value === 0 ? "" : value.toString();
+}
+
+function createBackgroundState(width, height, rawBackgrounds = []) {
+  const total = width * height;
+  return sanitizeTileBackgrounds(rawBackgrounds, total);
+}
+
+function buildTileBackgroundUrl(name) {
+  const encoded = encodeURIComponent(name);
+  return `pics/${encoded}`;
 }

@@ -249,6 +249,11 @@ a {
   transition: transform 0.12s ease, box-shadow 0.18s ease;
 }
 
+.tile--image {
+  background-color: rgba(10, 26, 58, 0.35);
+  background-blend-mode: multiply;
+}
+
 .tile:hover {
   transform: translateY(-3px);
   box-shadow: 0 18px 36px rgba(17, 38, 79, 0.24);
@@ -261,6 +266,26 @@ a {
 
 .tile.empty {
   visibility: hidden;
+}
+
+.board[data-has-backgrounds="true"] .tile:not(.empty) {
+  color: #fff;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 0.95),
+    0 0 8px rgba(0, 0, 0, 0.6),
+    2px 0 2px rgba(0, 0, 0, 0.6),
+    -2px 0 2px rgba(0, 0, 0, 0.6),
+    0 2px 2px rgba(0, 0, 0, 0.6),
+    0 -2px 2px rgba(0, 0, 0, 0.6);
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.5);
+}
+
+.board[data-has-backgrounds="true"] .tile--image {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 12px 28px rgba(12, 24, 48, 0.22);
+}
+
+.board[data-has-backgrounds="true"] .tile--image:hover {
+  box-shadow: 0 18px 38px rgba(12, 24, 48, 0.3);
 }
 
 .message {

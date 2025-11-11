@@ -32,6 +32,13 @@
             <option value="clear">Очистить поле</option>
           </select>
         </div>
+        <div class="control-group">
+          <label class="control-label" for="mode">Оформление плиток</label>
+          <select id="mode">
+            <option value="default" selected>Стандартные плитки</option>
+            <option value="images">Фоны из картинок</option>
+          </select>
+        </div>
         <button type="button" id="apply" class="primary-button">
           Обновить поле
         </button>
@@ -39,12 +46,14 @@
 
       <section class="generator-board">
         <h2>Раскладка</h2>
-        <div
-          id="preview"
-          class="preview"
-          role="grid"
-          aria-label="Конструктор поля"
-        ></div>
+        <div class="preview-scroller">
+          <div
+            id="preview"
+            class="preview"
+            role="grid"
+            aria-label="Конструктор поля"
+          ></div>
+        </div>
         <p class="hint">
           Оставьте ячейку пустой, чтобы обозначить свободное поле.
         </p>

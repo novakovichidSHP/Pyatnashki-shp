@@ -1,9 +1,16 @@
 import { encodePuzzle, decodePuzzle } from "../scripts/puzzle.js";
+import {
+  TILE_BACKGROUNDS,
+  hasTileBackgrounds,
+  normalizeTileBackground,
+  sanitizeTileBackgrounds,
+} from "../scripts/resources.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const widthInput = document.getElementById("width");
   const heightInput = document.getElementById("height");
   const autofillSelect = document.getElementById("autofill");
+  const modeSelect = document.getElementById("mode");
   const applyButton = document.getElementById("apply");
   const preview = document.getElementById("preview");
   const payloadField = document.getElementById("payload");
@@ -13,8 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const copyStatus = document.getElementById("copy-status");
   const validationMessage = document.getElementById("validation");
 
+  const backgroundOptions = [
+    { id: "", label: "Без фона" },
+    ...TILE_BACKGROUNDS,
+  ];
+
   let gridWidth = clamp(Number(widthInput.value), 2, 8);
   let gridHeight = clamp(Number(heightInput.value), 2, 8);
+  let tileMode = modeSelect?.value ?? "default";
+  let gridBackgrounds = Array.from(
+    { length: gridWidth * gridHeight },
+    () => "",
+  );
   let lastValidResult = { payload: "", url: "" };
 
   const initialFromUrl = readFromUrl();
@@ -28,28 +45,75 @@ document.addEventListener("DOMContentLoaded", () => {
     initialValues = initialFromUrl.tiles.map((value) =>
       value === 0 ? "" : value.toString(),
     );
+    const total = gridWidth * gridHeight;
+    const sanitizedFromUrl = sanitizeTileBackgrounds(
+      initialFromUrl.backgrounds ?? [],
+      total,
+    );
+    if (hasTileBackgrounds(sanitizedFromUrl)) {
+      tileMode = "images";
+      gridBackgrounds = sanitizedFromUrl;
+    } else {
+      gridBackgrounds = Array.from({ length: total }, () => "");
+    }
+  } else {
+    gridBackgrounds = Array.from({ length: gridWidth * gridHeight }, () => "");
   }
 
-  buildGrid(initialValues ?? createSequenceValues(gridWidth, gridHeight));
+  if (modeSelect) {
+    modeSelect.value = tileMode;
+  }
+
+  buildGrid(
+    initialValues ?? createSequenceValues(gridWidth, gridHeight),
+    gridBackgrounds,
+  );
   updateResult();
 
   applyButton.addEventListener("click", () => {
+    const previousWidth = gridWidth;
+    const previousHeight = gridHeight;
+
     gridWidth = clamp(Number(widthInput.value), 2, 8);
     gridHeight = clamp(Number(heightInput.value), 2, 8);
     widthInput.value = gridWidth.toString();
     heightInput.value = gridHeight.toString();
 
-    const mode = autofillSelect.value;
-    if (mode === "clear") {
-      buildGrid(Array(gridWidth * gridHeight).fill(""));
-    } else if (mode === "random") {
-      buildGrid(createRandomValues(gridWidth, gridHeight));
+    const total = gridWidth * gridHeight;
+    if (gridWidth !== previousWidth || gridHeight !== previousHeight) {
+      gridBackgrounds = Array.from({ length: total }, () => "");
     } else {
-      buildGrid(createSequenceValues(gridWidth, gridHeight));
+      gridBackgrounds = sanitizeTileBackgrounds(gridBackgrounds, total);
     }
 
+    const mode = autofillSelect.value;
+    let values = [];
+
+    if (mode === "clear") {
+      values = Array(total).fill("");
+    } else if (mode === "random") {
+      values = createRandomValues(gridWidth, gridHeight);
+    } else {
+      values = createSequenceValues(gridWidth, gridHeight);
+    }
+
+    buildGrid(values, gridBackgrounds);
     updateResult();
   });
+
+  if (modeSelect) {
+    modeSelect.addEventListener("change", () => {
+      tileMode = modeSelect.value;
+      const currentValues = readCurrentInputValues();
+      gridBackgrounds = sanitizeTileBackgrounds(
+        gridBackgrounds,
+        gridWidth * gridHeight,
+      );
+      buildGrid(currentValues, gridBackgrounds);
+      markDirty();
+      updateResult();
+    });
+  }
 
   generateButton.addEventListener("click", () => {
     updateResult();
@@ -77,18 +141,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2500);
   });
 
-  function buildGrid(values) {
+  function buildGrid(values, backgrounds) {
     preview.innerHTML = "";
-    preview.style.gridTemplateColumns = `repeat(${gridWidth}, minmax(48px, 1fr))`;
     preview.style.setProperty("--columns", gridWidth);
+    preview.dataset.mode = tileMode;
 
     const total = gridWidth * gridHeight;
-    const cells = Array.from(
-      { length: total },
-      (_, index) => values?.[index] ?? "",
+    const sanitizedBackgrounds = sanitizeTileBackgrounds(
+      backgrounds ?? gridBackgrounds,
+      total,
     );
+    gridBackgrounds = sanitizedBackgrounds;
 
-    cells.forEach((value, index) => {
+    const cells = Array.from({ length: total }, (_, index) => ({
+      value: values?.[index] ?? "",
+      background: gridBackgrounds[index] ?? "",
+    }));
+
+    cells.forEach(({ value, background }, index) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "preview-cell";
+      wrapper.dataset.index = index.toString();
+
+      if (tileMode === "images") {
+        applyPreviewBackground(wrapper, background);
+      } else {
+        applyPreviewBackground(wrapper, "");
+      }
+
       const input = document.createElement("input");
       input.type = "text";
       input.inputMode = "numeric";
@@ -103,12 +183,39 @@ document.addEventListener("DOMContentLoaded", () => {
         markDirty();
       });
 
-      preview.appendChild(input);
+      wrapper.appendChild(input);
+
+      if (tileMode === "images") {
+        const select = document.createElement("select");
+        select.className = "preview-background-select";
+        select.dataset.index = index.toString();
+
+        backgroundOptions.forEach(({ id, label }) => {
+          const option = document.createElement("option");
+          option.value = id;
+          option.textContent = label;
+          select.appendChild(option);
+        });
+
+        select.value = normalizeTileBackground(background);
+
+        select.addEventListener("change", () => {
+          const normalized = normalizeTileBackground(select.value);
+          gridBackgrounds[index] = normalized;
+          applyPreviewBackground(wrapper, normalized);
+          copyStatus.textContent = "";
+          markDirty();
+        });
+
+        wrapper.appendChild(select);
+      }
+
+      preview.appendChild(wrapper);
     });
   }
 
   function updateResult() {
-    const { tiles, error } = collectTiles();
+    const { tiles, backgrounds, error } = collectTiles();
 
     if (error) {
       validationMessage.dataset.state = "error";
@@ -125,10 +232,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     validationMessage.textContent = "";
     delete validationMessage.dataset.state;
+
     const payload = encodePuzzle({
       width: gridWidth,
       height: gridHeight,
       tiles,
+      backgrounds: tileMode === "images" ? backgrounds : undefined,
     });
     const targetUrl = buildTargetUrl(payload);
     payloadField.value = payload;
@@ -137,9 +246,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function collectTiles() {
-    const inputs = Array.from(preview.querySelectorAll("input"));
+    const inputs = Array.from(preview.querySelectorAll("input[data-index]"));
     if (inputs.length !== gridWidth * gridHeight) {
-      return { tiles: [], error: "Поле не готово" };
+      return { tiles: [], backgrounds: [], error: "Поле не готово" };
     }
 
     const tiles = inputs.map((input) => {
@@ -154,13 +263,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tiles.some((value) => Number.isNaN(value))) {
       return {
         tiles: [],
+        backgrounds: [],
         error: "Используйте только числа или оставляйте клетку пустой",
       };
     }
 
     const zeroCount = tiles.filter((value) => value === 0).length;
     if (zeroCount !== 1) {
-      return { tiles: [], error: "Должна быть ровно одна пустая клетка" };
+      return { tiles: [], backgrounds: [], error: "Должна быть ровно одна пустая клетка" };
     }
 
     const expectedNumbers = Array.from(
@@ -173,19 +283,30 @@ document.addEventListener("DOMContentLoaded", () => {
     providedNumbers.sort((a, b) => a - b);
 
     if (expectedNumbers.length !== providedNumbers.length) {
-      return { tiles: [], error: "Заполните все клетки числами от 1 до N-1" };
+      return {
+        tiles: [],
+        backgrounds: [],
+        error: "Заполните все клетки числами от 1 до N-1",
+      };
     }
 
     for (let i = 0; i < expectedNumbers.length; i += 1) {
       if (expectedNumbers[i] !== providedNumbers[i]) {
         return {
           tiles: [],
+          backgrounds: [],
           error: "Используйте каждое число от 1 до N-1 по одному разу",
         };
       }
     }
 
-    return { tiles, error: null };
+    const sanitizedBackgrounds = sanitizeTileBackgrounds(
+      gridBackgrounds,
+      gridWidth * gridHeight,
+    );
+    gridBackgrounds = sanitizedBackgrounds;
+
+    return { tiles, backgrounds: sanitizedBackgrounds, error: null };
   }
 
   function createSequenceValues(width, height) {
@@ -240,6 +361,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return inversions % 2 === 0;
   }
 
+  function readCurrentInputValues() {
+    return Array.from(preview.querySelectorAll("input[data-index]"), (input) =>
+      input.value,
+    );
+  }
+
   function buildTargetUrl(payload) {
     const baseUrl = new URL("../", window.location.href);
     baseUrl.search = "";
@@ -263,6 +390,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
+  }
+
+  function applyPreviewBackground(element, backgroundName) {
+    if (!element) return;
+    if (backgroundName) {
+      const encoded = encodeURIComponent(backgroundName);
+      element.style.backgroundImage = `url(../pics/${encoded})`;
+      element.dataset.hasBackground = "true";
+    } else {
+      element.style.backgroundImage = "none";
+      delete element.dataset.hasBackground;
+    }
   }
 
   function markDirty() {
